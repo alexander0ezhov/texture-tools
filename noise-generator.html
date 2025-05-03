@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noise Generator | Texture Tools Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noisejs/2.1.0/noise.min.js"></script>
+    <style>
+        /* Стили остаются без изменений */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #f43f5e;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+            --card-bg: rgba(255, 255, 255, 0.96);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%); color: var(--dark); line-height: 1.6; min-height: 100vh; padding: 20px; background-attachment: fixed; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; transition: var(--transition); text-decoration: none; }
+        .back-btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 12px; text-align: center; }
+        .tool-container { background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 30px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .controls { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 25px; }
+        .control-group { flex: 1; min-width: 250px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; }
+        select, input[type="range"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--gray); margin-bottom: 15px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; transition: var(--transition); width: 100%; max-width: 300px; margin: 10px auto; }
+        .btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        canvas { max-width: 100%; height: auto; border-radius: 8px; background: white; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: block; margin: 20px auto; }
+        .canvas-container { text-align: center; margin-top: 30px; }
+        .canvas-label { margin-top: 10px; font-weight: 500; }
+        input[type="range"] { -webkit-appearance: none; height: 8px; background: #ddd; border-radius: 4px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; cursor: pointer; }
+        @media (max-width: 768px) { .tool-container { padding: 20px; } .controls { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> На главную
+            </a>
+            <h1>Noise Generator</h1>
+            <div></div>
+        </div>
+
+        <div class="tool-container">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="noiseType">Тип шума</label>
+                    <select id="noiseType">
+                        <option value="perlin">Perlin Noise</option>
+                        <option value="simplex">Simplex Noise</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="scale">Масштаб: <span id="scaleValue">50</span></label>
+                    <input type="range" id="scale" min="10" max="200" value="50">
+                </div>
+                
+                <div class="control-group">
+                    <label for="octaves">Октавы: <span id="octavesValue">3</span></label>
+                    <input type="range" id="octaves" min="1" max="8" value="3">
+                </div>
+                
+                <div class="control-group">
+                    <label for="seed">Seed: <span id="seedValue">0</span></label>
+                    <input type="range" id="seed" min="0" max="1000" value="0">
+                </div>
+            </div>
+
+            <button id="generateBtn" class="btn">
+                <i class="fas fa-redo"></i> Сгенерировать шум
+            </button>
+
+            <div class="canvas-container">
+                <canvas id="noiseCanvas" width="512" height="512"></canvas>
+                <div class="canvas-label">Generated Noise</div>
+            </div>
+
+            <button id="downloadBtn" class="btn">
+                <i class="fas fa-download"></i> Скачать текстуру
+            </button>
+        </div>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Элементы DOM
+        const noiseType = document.getElementById('noiseType');
+        const scaleSlider = document.getElementById('scale');
+        const scaleValue = document.getElementById('scaleValue');
+        const octavesSlider = document.getElementById('octaves');
+        const octavesValue = document.getElementById('octavesValue');
+        const seedSlider = document.getElementById('seed');
+        const seedValue = document.getElementById('seedValue');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const noiseCanvas = document.getElementById('noiseCanvas');
+        const noiseCtx = noiseCanvas.getContext('2d');
+
+        // Инициализация генератора шума (встроенная реализация)
+        class SimpleNoise {
+            constructor(seed) {
+                this.seed = seed || Math.random() * 1000;
+            }
+            
+            noise(x, y) {
+                const n = Math.sin(this.dot(x, y, this.seed)) * 43758.5453;
+                return n - Math.floor(n);
+            }
+            
+            dot(x, y, seed) {
+                return x * 12.9898 + y * 78.233 + seed;
+            }
+        }
+
+        const simpleNoise = new SimpleNoise();
+        
+        // Обновление значений слайдеров
+        function updateSliderValues() {
+            scaleValue.textContent = scaleSlider.value;
+            octavesValue.textContent = octavesSlider.value;
+            seedValue.textContent = seedSlider.value;
+            simpleNoise.seed = parseInt(seedSlider.value);
+        }
+
+        scaleSlider.addEventListener('input', updateSliderValues);
+        octavesSlider.addEventListener('input', updateSliderValues);
+        seedSlider.addEventListener('input', updateSliderValues);
+
+        // Генерация шума
+        function generateNoise() {
+            const width = noiseCanvas.width;
+            const height = noiseCanvas.height;
+            const scale = parseInt(scaleSlider.value);
+            const octaves = parseInt(octavesSlider.value);
+            const selectedNoiseType = noiseType.value;
+
+            const imageData = noiseCtx.createImageData(width, height);
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let value = 0;
+                    
+                    // Упрощённая реализация шума
+                    for (let o = 0; o < octaves; o++) {
+                        const frequency = Math.pow(2, o);
+                        const amplitude = Math.pow(0.5, o);
+                        const nx = x / scale * frequency;
+                        const ny = y / scale * frequency;
+                        value += simpleNoise.noise(nx, ny) * amplitude;
+                    }
+                    
+                    value = (value + 1) / 2; // Нормализация к [0,1]
+                    
+                    const i = (y * width + x) * 4;
+                    const color = Math.floor(value * 255);
+                    imageData.data[i] = color;      // R
+                    imageData.data[i + 1] = color;  // G
+                    imageData.data[i + 2] = color;  // B
+                    imageData.data[i + 3] = 255;    // Alpha
+                }
+            }
+
+            noiseCtx.putImageData(imageData, 0, 0);
+        }
+
+        // Скачивание результата
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `noise-${noiseType.value}-${Date.now()}.png`;
+            link.href = noiseCanvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // Инициализация
+        updateSliderValues();
+        generateBtn.addEventListener('click', generateNoise);
+        generateNoise(); // Автоматическая генерация при загрузке
+
+        // Адаптация размера canvas
+        function adjustCanvasSize() {
+            const maxSize = Math.min(window.innerWidth * 0.9, 600);
+            noiseCanvas.style.width = `${maxSize}px`;
+            noiseCanvas.style.height = `${maxSize}px`;
+        }
+
+        window.addEventListener('resize', adjustCanvasSize);
+        adjustCanvasSize();
+    });
+</script>
+</body>
+</html> 

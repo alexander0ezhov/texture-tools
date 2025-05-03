@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Normal Map Generator | Texture Tools Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #f43f5e;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+            --card-bg: rgba(255, 255, 255, 0.96);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 800;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .tool-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        .drop-zone {
+            border: 2px dashed var(--gray);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 25px;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .drop-zone.highlight {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            max-width: 300px;
+            margin: 10px auto;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+        }
+
+        .btn.reset {
+            background: var(--secondary);
+        }
+
+        .btn.reset:hover {
+            background: #e11d48;
+        }
+
+        .image-comparison {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .image-wrapper {
+            flex: 1;
+            min-width: 300px;
+            text-align: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .image-label {
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .tool-container {
+                padding: 20px;
+            }
+            
+            .drop-zone {
+                padding: 30px 20px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> На главную
+            </a>
+            <h1>Normal Map Generator</h1>
+            <div></div>
+        </div>
+
+        <div class="tool-container">
+            <div id="dropZone" class="drop-zone">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 15px;"></i>
+                <p>Перетащите изображение сюда</p>
+                <p>или кликните для выбора файла</p>
+            </div>
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="strengthSlider">Сила эффекта: <span id="strengthValue">3</span></label>
+                    <input type="range" id="strengthSlider" min="1" max="20" value="3" step="0.1">
+                </div>
+                
+                <div class="control-group">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="invertRedCheckbox">
+                        <label for="invertRedCheckbox">Инвертировать Red (X)</label>
+                    </div>
+                    
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="invertGreenCheckbox">
+                        <label for="invertGreenCheckbox">Инвертировать Green (Y)</label>
+                    </div>
+                </div>
+            </div>
+
+            <button id="generateBtn" class="btn" disabled>
+                <i class="fas fa-magic"></i> Generate Normal Map
+            </button>
+            <button id="resetBtn" class="btn reset">
+                <i class="fas fa-redo"></i> Reset Image
+            </button>
+
+            <div class="image-comparison">
+                <div class="image-wrapper">
+                    <canvas id="originalCanvas"></canvas>
+                    <div class="image-label">Original Image</div>
+                </div>
+                <div class="image-wrapper">
+                    <canvas id="normalCanvas"></canvas>
+                    <div class="image-label">Normal Map</div>
+                </div>
+            </div>
+
+            <button id="downloadBtn" class="btn" disabled>
+                <i class="fas fa-download"></i> Download Result
+            </button>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Элементы DOM
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('imageInput');
+            const generateBtn = document.getElementById('generateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const originalCanvas = document.getElementById('originalCanvas');
+            const originalCtx = originalCanvas.getContext('2d');
+            const normalCanvas = document.getElementById('normalCanvas');
+            const normalCtx = normalCanvas.getContext('2d');
+            const strengthSlider = document.getElementById('strengthSlider');
+            const strengthValue = document.getElementById('strengthValue');
+            const invertRedCheckbox = document.getElementById('invertRedCheckbox');
+            const invertGreenCheckbox = document.getElementById('invertGreenCheckbox');
+            
+            let originalImage = null;
+            let originalImageData = null;
+            let originalImageBitmap = null;
+
+            // Инициализация canvas
+            originalCanvas.width = 1;
+            originalCanvas.height = 1;
+            normalCanvas.width = 1;
+            normalCanvas.height = 1;
+
+            // Обработчики Drag-and-Drop
+            dropZone.addEventListener('click', () => fileInput.click());
+            
+            ['dragover', 'dragenter'].forEach(event => {
+                dropZone.addEventListener(event, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('highlight');
+                });
+            });
+            
+            ['dragleave', 'dragend', 'drop'].forEach(event => {
+                dropZone.addEventListener(event, () => {
+                    dropZone.classList.remove('highlight');
+                });
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    loadImage(fileInput.files[0]);
+                }
+            });
+
+            // Загрузка изображения
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    loadImage(e.target.files[0]);
+                }
+            });
+
+            async function loadImage(file) {
+                const img = new Image();
+                img.onload = async function() {
+                    originalImage = img;
+                    adjustCanvasSize(img.width, img.height);
+                    
+                    // Создаем ImageBitmap для стабильного рендеринга
+                    originalImageBitmap = await createImageBitmap(img);
+                    
+                    originalCanvas.width = img.width;
+                    originalCanvas.height = img.height;
+                    originalCtx.drawImage(originalImageBitmap, 0, 0);
+                    
+                    originalImageData = originalCtx.getImageData(0, 0, img.width, img.height);
+                    
+                    normalCanvas.width = img.width;
+                    normalCanvas.height = img.height;
+                    normalCtx.clearRect(0, 0, img.width, img.height);
+                    
+                    generateBtn.disabled = false;
+                    downloadBtn.disabled = true;
+                    dropZone.style.display = 'none';
+                };
+                img.onerror = function() {
+                    alert('Ошибка загрузки изображения');
+                };
+                img.src = URL.createObjectURL(file);
+            }
+
+            // Сброс изображения
+            resetBtn.addEventListener('click', function() {
+                originalImage = null;
+                originalImageData = null;
+                originalImageBitmap = null;
+                originalCanvas.width = 1;
+                originalCanvas.height = 1;
+                normalCanvas.width = 1;
+                normalCanvas.height = 1;
+                generateBtn.disabled = true;
+                downloadBtn.disabled = true;
+                fileInput.value = '';
+                dropZone.style.display = 'block';
+            });
+
+            // Обновление значения слайдера
+            strengthSlider.addEventListener('input', function() {
+                strengthValue.textContent = this.value;
+            });
+
+            // Генерация Normal Map
+            generateBtn.addEventListener('click', generateNormalMap);
+            
+            function generateNormalMap() {
+                if (!originalImageData) {
+                    alert('Сначала загрузите изображение!');
+                    return;
+                }
+
+                const strength = parseFloat(strengthSlider.value);
+                const invertRed = invertRedCheckbox.checked;
+                const invertGreen = invertGreenCheckbox.checked;
+                
+                // Создаем временный canvas для обработки
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = originalImageData.width;
+                tempCanvas.height = originalImageData.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(originalImageData, 0, 0);
+                
+                // Получаем данные изображения в градациях серого
+                const grayData = getGrayScaleData(tempCtx, originalImageData.width, originalImageData.height);
+                
+                // Создаем нормал мап
+                const normalData = new Uint8ClampedArray(originalImageData.data.length);
+                
+                for (let y = 0; y < originalImageData.height; y++) {
+                    for (let x = 0; x < originalImageData.width; x++) {
+                        const i = (y * originalImageData.width + x) * 4;
+                        
+                        // Получаем соседние пиксели (с учетом границ)
+                        const x1 = x > 0 ? x - 1 : x;
+                        const x2 = x < originalImageData.width - 1 ? x + 1 : x;
+                        const y1 = y > 0 ? y - 1 : y;
+                        const y2 = y < originalImageData.height - 1 ? y + 1 : y;
+                        
+                        // Вычисляем градиенты
+                        const top = grayData[y1 * originalImageData.width + x];
+                        const bottom = grayData[y2 * originalImageData.width + x];
+                        const left = grayData[y * originalImageData.width + x1];
+                        const right = grayData[y * originalImageData.width + x2];
+                        
+                        const dx = (left - right) * strength;
+                        const dy = (top - bottom) * strength;
+                        const dz = Math.sqrt(1 - dx * dx - dy * dy);
+                        
+                        // Нормализуем и преобразуем в RGB
+                        normalData[i] = (dx * (invertRed ? -1 : 1) + 1) * 127.5;     // R (X)
+                        normalData[i + 1] = (dy * (invertGreen ? -1 : 1) + 1) * 127.5; // G (Y)
+                        normalData[i + 2] = dz * 255;                                   // B (Z)
+                        normalData[i + 3] = 255;                                        // Alpha
+                    }
+                }
+
+                const normalImageData = new ImageData(normalData, originalImageData.width, originalImageData.height);
+                normalCtx.putImageData(normalImageData, 0, 0);
+                downloadBtn.disabled = false;
+            }
+            
+            // Преобразование в градации серого
+            function getGrayScaleData(ctx, width, height) {
+                const imageData = ctx.getImageData(0, 0, width, height);
+                const data = imageData.data;
+                const grayData = new Uint8ClampedArray(width * height);
+                
+                for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+                    grayData[j] = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                }
+                
+                return grayData;
+            }
+
+            // Скачивание результата
+            downloadBtn.addEventListener('click', function() {
+                const link = document.createElement('a');
+                link.download = 'normal-map-' + Date.now() + '.png';
+                link.href = normalCanvas.toDataURL('image/png');
+                link.click();
+            });
+
+            // Адаптация размера canvas
+            function adjustCanvasSize(width, height) {
+                const maxWidth = (window.innerWidth * 0.9) / 2 - 40;
+                const maxHeight = window.innerHeight * 0.4;
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                
+                originalCanvas.style.width = `${width * ratio}px`;
+                originalCanvas.style.height = `${height * ratio}px`;
+                normalCanvas.style.width = `${width * ratio}px`;
+                normalCanvas.style.height = `${height * ratio}px`;
+            }
+
+            // Ресайз окна
+            window.addEventListener('resize', function() {
+                if (originalImage) {
+                    adjustCanvasSize(originalImage.width, originalImage.height);
+                }
+            });
+
+            // Перерисовка при скролле
+            window.addEventListener('scroll', function() {
+                if (originalImageBitmap) {
+                    originalCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
+                    originalCtx.drawImage(originalImageBitmap, 0, 0);
+                    
+                    if (!downloadBtn.disabled) {
+                        const normalData = normalCtx.getImageData(0, 0, normalCanvas.width, normalCanvas.height);
+                        normalCtx.putImageData(normalData, 0, 0);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html

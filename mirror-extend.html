@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mirror Extend | Texture Tools</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #f43f5e;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+            --card-bg: rgba(255, 255, 255, 0.96);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 800;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .tool-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--gray);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 25px;
+            transition: var(--transition);
+        }
+
+        .drop-zone.highlight {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .direction-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        @media (min-width: 768px) {
+            .direction-buttons {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .dir-btn {
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dir-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .dir-btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            max-width: 300px;
+            margin: 10px auto;
+        }
+
+        .btn.reset {
+            background: var(--secondary);
+        }
+
+        .btn.reset:hover {
+            background: #e11d48;
+        }
+
+        .btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .canvas-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .canvas-label {
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .tool-container {
+                padding: 20px;
+            }
+            .drop-zone {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> На главную
+            </a>
+            <h1>Mirror Extend</h1>
+            <div></div>
+        </div>
+
+        <div class="tool-container">
+            <div id="dropZone" class="drop-zone">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 15px;"></i>
+                <p>Перетащите изображение сюда</p>
+                <p>или кликните для выбора файла</p>
+            </div>
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+
+            <div class="direction-buttons">
+                <button class="dir-btn" data-direction="top" disabled>
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Вверх</span>
+                </button>
+                <button class="dir-btn" data-direction="bottom" disabled>
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Вниз</span>
+                </button>
+                <button class="dir-btn" data-direction="left" disabled>
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Влево</span>
+                </button>
+                <button class="dir-btn" data-direction="right" disabled>
+                    <i class="fas fa-arrow-right"></i>
+                    <span>Вправо</span>
+                </button>
+            </div>
+
+            <button id="resetBtn" class="btn reset">
+                <i class="fas fa-redo"></i> Сбросить изображение
+            </button>
+
+            <div class="canvas-container">
+                <canvas id="canvas"></canvas>
+                <p class="canvas-label">Результат</p>
+            </div>
+
+            <button id="downloadBtn" class="btn" disabled>
+                <i class="fas fa-download"></i> Скачать результат
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Элементы DOM
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('imageInput');
+            const directionBtns = document.querySelectorAll('.dir-btn');
+            const resetBtn = document.getElementById('resetBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            let originalImage = null;
+            let originalImageData = null;
+
+            // Инициализация canvas
+            canvas.width = 1;
+            canvas.height = 1;
+
+            // Обработчики Drag-and-Drop
+            dropZone.addEventListener('click', () => fileInput.click());
+            
+            ['dragover', 'dragenter'].forEach(event => {
+                dropZone.addEventListener(event, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('highlight');
+                });
+            });
+            
+            ['dragleave', 'dragend', 'drop'].forEach(event => {
+                dropZone.addEventListener(event, () => {
+                    dropZone.classList.remove('highlight');
+                });
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    loadImage(fileInput.files[0]);
+                }
+            });
+
+            // Загрузка изображения
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    loadImage(e.target.files[0]);
+                }
+            });
+
+            function loadImage(file) {
+                const img = new Image();
+                img.onload = function() {
+                    originalImage = img;
+                    adjustCanvasSize(img.width, img.height);
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    originalImageData = ctx.getImageData(0, 0, img.width, img.height);
+                    
+                    // Активируем кнопки
+                    directionBtns.forEach(btn => btn.disabled = false);
+                    downloadBtn.disabled = false;
+                    dropZone.style.display = 'none';
+                };
+                img.onerror = function() {
+                    alert('Ошибка загрузки изображения');
+                };
+                img.src = URL.createObjectURL(file);
+            }
+
+            // Сброс изображения
+            resetBtn.addEventListener('click', function() {
+                originalImage = null;
+                originalImageData = null;
+                canvas.width = 1;
+                canvas.height = 1;
+                directionBtns.forEach(btn => btn.disabled = true);
+                downloadBtn.disabled = true;
+                fileInput.value = '';
+                dropZone.style.display = 'block';
+            });
+
+            // Обработка кнопок направления
+            directionBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!originalImage) return;
+                    
+                    const direction = this.getAttribute('data-direction');
+                    mirrorExtend(direction);
+                });
+            });
+
+            // Функция отзеркаливания
+            function mirrorExtend(direction) {
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                let newWidth = canvas.width;
+                let newHeight = canvas.height;
+
+                // Определяем новые размеры
+                switch (direction) {
+                    case 'top':
+                    case 'bottom':
+                        newHeight *= 2;
+                        break;
+                    case 'left':
+                    case 'right':
+                        newWidth *= 2;
+                        break;
+                }
+
+                tempCanvas.width = newWidth;
+                tempCanvas.height = newHeight;
+
+                // Рисуем исходное изображение
+                switch (direction) {
+                    case 'top':
+                        tempCtx.drawImage(canvas, 0, canvas.height, canvas.width, canvas.height);
+                        tempCtx.scale(1, -1);
+                        tempCtx.drawImage(canvas, 0, -canvas.height, canvas.width, canvas.height);
+                        break;
+                    case 'bottom':
+                        tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+                        tempCtx.scale(1, -1);
+                        tempCtx.drawImage(canvas, 0, -2 * canvas.height, canvas.width, canvas.height);
+                        break;
+                    case 'left':
+                        tempCtx.drawImage(canvas, canvas.width, 0, canvas.width, canvas.height);
+                        tempCtx.scale(-1, 1);
+                        tempCtx.drawImage(canvas, -canvas.width, 0, canvas.width, canvas.height);
+                        break;
+                    case 'right':
+                        tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+                        tempCtx.scale(-1, 1);
+                        tempCtx.drawImage(canvas, -2 * canvas.width, 0, canvas.width, canvas.height);
+                        break;
+                }
+
+                // Обновляем основной canvas
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                ctx.drawImage(tempCanvas, 0, 0);
+                
+                // Обновляем размеры для отображения
+                adjustCanvasSize(newWidth, newHeight);
+            }
+
+            // Адаптация размера canvas
+            function adjustCanvasSize(width, height) {
+                const maxWidth = window.innerWidth * 0.9;
+                const maxHeight = window.innerHeight * 0.5;
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                
+                canvas.style.width = `${width * ratio}px`;
+                canvas.style.height = `${height * ratio}px`;
+            }
+
+            // Скачивание результата
+            downloadBtn.addEventListener('click', function() {
+                const link = document.createElement('a');
+                link.download = 'mirror-extend-' + Date.now() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+
+            // Ресайз окна
+            window.addEventListener('resize', function() {
+                if (originalImage) {
+                    adjustCanvasSize(canvas.width, canvas.height);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
