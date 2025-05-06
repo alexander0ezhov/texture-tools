@@ -158,229 +158,312 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <a href="index.html" class="back-btn">
-                <i class="fas fa-arrow-left"></i> На главную
-            </a>
-            <h1>Displacement Map Generator</h1>
-            <div></div>
-        </div>
-
-        <div class="tool-container">
-            <div id="dropZone" class="drop-zone">
-                <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 15px;"></i>
-                <p>Перетащите изображение сюда</p>
-                <p>или кликните для выбора файла</p>
-            </div>
-            <input type="file" id="imageInput" accept="image/*" style="display: none;">
-
-            <div class="controls">
-                <div class="control-group">
-                    <label for="strengthSlider">Сила эффекта: <span id="strengthValue">10</span></label>
-                    <input type="range" id="strengthSlider" min="1" max="50" value="10" class="slider">
-                </div>
-                <div class="control-group">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" id="normalizeCheckbox" checked>
-                        <label for="normalizeCheckbox">Нормализовать яркость</label>
-                    </div>
-                </div>
-            </div>
-
-            <button id="generateBtn" class="btn" disabled>
-                <i class="fas fa-magic"></i> Generate Displacement Map
-            </button>
-            <button id="resetBtn" class="btn" style="background: var(--secondary);">
-                <i class="fas fa-redo"></i> Reset Image
-            </button>
-
-            <div class="image-comparison">
-                <div style="flex: 1; min-width: 300px; text-align: center;">
-                    <canvas id="originalCanvas"></canvas>
-                    <p style="margin-top: 10px; font-weight: 500;">Original Image</p>
-                </div>
-                <div style="flex: 1; min-width: 300px; text-align: center;">
-                    <canvas id="displacementCanvas"></canvas>
-                    <p style="margin-top: 10px; font-weight: 500;">Displacement Map</p>
-                </div>
-            </div>
-
-            <button id="downloadBtn" class="btn" disabled>
-                <i class="fas fa-download"></i> Download Result
-            </button>
-        </div>
+<div class="container">
+    <div class="header">
+        <a href="index.html" class="back-btn">
+            <i class="fas fa-arrow-left"></i> На главную
+        </a>
+        <h1>Displacement Map Generator</h1>
+        <div></div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Инициализация элементов
-            const dropZone = document.getElementById('dropZone');
-            const fileInput = document.getElementById('imageInput');
-            const generateBtn = document.getElementById('generateBtn');
-            const resetBtn = document.getElementById('resetBtn');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const originalCanvas = document.getElementById('originalCanvas');
-            const originalCtx = originalCanvas.getContext('2d');
-            const displacementCanvas = document.getElementById('displacementCanvas');
-            const displacementCtx = displacementCanvas.getContext('2d');
-            const strengthSlider = document.getElementById('strengthSlider');
-            const strengthValue = document.getElementById('strengthValue');
-            const normalizeCheckbox = document.getElementById('normalizeCheckbox');
-            
-            let originalImage = null;
-            let originalImageData = null;
+    <div class="tool-container">
+        <div id="dropZone" class="drop-zone">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 15px;"></i>
+            <p>Перетащите изображение сюда</p>
+            <p>или кликните для выбора файла</p>
+        </div>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
 
-            // Установка начальных размеров canvas
+        <div class="controls">
+            <div class="control-group">
+                <label for="strengthSlider">Сила эффекта: <span id="strengthValue">10</span></label>
+                <input type="range" id="strengthSlider" min="1" max="50" value="10" class="slider">
+            </div>
+            <div class="control-group">
+                <label for="blurSlider">Сглаживание: <span id="blurValue">0</span></label>
+                <input type="range" id="blurSlider" min="0" max="10" value="0" class="slider">
+            </div>
+            <div class="control-group">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="normalizeCheckbox" checked>
+                    <label for="normalizeCheckbox">Нормализовать яркость</label>
+                </div>
+            </div>
+        </div>
+
+        <button id="generateBtn" class="btn" disabled>
+            <i class="fas fa-magic"></i> Generate Displacement Map
+        </button>
+        <button id="resetBtn" class="btn" style="background: var(--secondary);">
+            <i class="fas fa-redo"></i> Reset Image
+        </button>
+
+        <div class="image-comparison">
+            <div style="flex: 1; min-width: 300px; text-align: center;">
+                <canvas id="originalCanvas"></canvas>
+                <p style="margin-top: 10px; font-weight: 500;">Original Image</p>
+            </div>
+            <div style="flex: 1; min-width: 300px; text-align: center;">
+                <canvas id="displacementCanvas"></canvas>
+                <p style="margin-top: 10px; font-weight: 500;">Displacement Map</p>
+            </div>
+        </div>
+
+        <button id="downloadBtn" class="btn" disabled>
+            <i class="fas fa-download"></i> Download Result
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Инициализация элементов
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('imageInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const originalCanvas = document.getElementById('originalCanvas');
+        const originalCtx = originalCanvas.getContext('2d');
+        const displacementCanvas = document.getElementById('displacementCanvas');
+        const displacementCtx = displacementCanvas.getContext('2d');
+        const strengthSlider = document.getElementById('strengthSlider');
+        const strengthValue = document.getElementById('strengthValue');
+        const blurSlider = document.getElementById('blurSlider');
+        const blurValue = document.getElementById('blurValue');
+        const normalizeCheckbox = document.getElementById('normalizeCheckbox');
+
+        let originalImage = null;
+        let originalImageData = null;
+
+        // Установка начальных размеров canvas
+        originalCanvas.width = 1;
+        originalCanvas.height = 1;
+        displacementCanvas.width = 1;
+        displacementCanvas.height = 1;
+
+        // Обработчики Drag-and-Drop
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        ['dragover', 'dragenter'].forEach(event => {
+            dropZone.addEventListener(event, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('highlight');
+            });
+        });
+
+        ['dragleave', 'dragend', 'drop'].forEach(event => {
+            dropZone.addEventListener(event, () => {
+                dropZone.classList.remove('highlight');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                loadImage(fileInput.files[0]);
+            }
+        });
+
+        // Загрузка изображения
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                loadImage(e.target.files[0]);
+            }
+        });
+
+        function loadImage(file) {
+            const img = new Image();
+            img.onload = function() {
+                originalImage = img;
+                adjustCanvasSize(img.width, img.height);
+
+                originalCanvas.width = img.width;
+                originalCanvas.height = img.height;
+                originalCtx.drawImage(img, 0, 0);
+
+                originalImageData = originalCtx.getImageData(0, 0, img.width, img.height);
+
+                displacementCanvas.width = img.width;
+                displacementCanvas.height = img.height;
+                displacementCtx.clearRect(0, 0, img.width, img.height);
+
+                generateBtn.disabled = false;
+                downloadBtn.disabled = true;
+                dropZone.style.display = 'none';
+            };
+            img.onerror = function() {
+                alert('Ошибка загрузки изображения');
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+        // Сброс изображения
+        resetBtn.addEventListener('click', function() {
+            originalImage = null;
+            originalImageData = null;
             originalCanvas.width = 1;
             originalCanvas.height = 1;
             displacementCanvas.width = 1;
             displacementCanvas.height = 1;
+            generateBtn.disabled = true;
+            downloadBtn.disabled = true;
+            fileInput.value = '';
+            dropZone.style.display = 'block';
+        });
 
-            // Обработчики Drag-and-Drop
-            dropZone.addEventListener('click', () => fileInput.click());
-            
-            ['dragover', 'dragenter'].forEach(event => {
-                dropZone.addEventListener(event, (e) => {
-                    e.preventDefault();
-                    dropZone.classList.add('highlight');
-                });
-            });
-            
-            ['dragleave', 'dragend', 'drop'].forEach(event => {
-                dropZone.addEventListener(event, () => {
-                    dropZone.classList.remove('highlight');
-                });
-            });
-            
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                if (e.dataTransfer.files.length) {
-                    fileInput.files = e.dataTransfer.files;
-                    loadImage(fileInput.files[0]);
-                }
-            });
+        // Адаптация размера canvas
+        function adjustCanvasSize(width, height) {
+            const maxWidth = (window.innerWidth * 0.9) / 2 - 40;
+            const maxHeight = window.innerHeight * 0.4;
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
 
-            // Загрузка изображения
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length) {
-                    loadImage(e.target.files[0]);
-                }
-            });
+            originalCanvas.style.width = `${width * ratio}px`;
+            originalCanvas.style.height = `${height * ratio}px`;
+            displacementCanvas.style.width = `${width * ratio}px`;
+            displacementCanvas.style.height = `${height * ratio}px`;
+        }
 
-            function loadImage(file) {
-                const img = new Image();
-                img.onload = function() {
-                    originalImage = img;
-                    adjustCanvasSize(img.width, img.height);
-                    
-                    originalCanvas.width = img.width;
-                    originalCanvas.height = img.height;
-                    originalCtx.drawImage(img, 0, 0);
-                    
-                    originalImageData = originalCtx.getImageData(0, 0, img.width, img.height);
-                    
-                    displacementCanvas.width = img.width;
-                    displacementCanvas.height = img.height;
-                    displacementCtx.clearRect(0, 0, img.width, img.height);
-                    
-                    generateBtn.disabled = false;
-                    downloadBtn.disabled = true;
-                    dropZone.style.display = 'none';
-                };
-                img.onerror = function() {
-                    alert('Ошибка загрузки изображения');
-                };
-                img.src = URL.createObjectURL(file);
-            }
+        // Обновление значения слайдеров
+        strengthSlider.addEventListener('input', function() {
+            strengthValue.textContent = this.value;
+        });
 
-            // Сброс изображения
-            resetBtn.addEventListener('click', function() {
-                originalImage = null;
-                originalImageData = null;
-                originalCanvas.width = 1;
-                originalCanvas.height = 1;
-                displacementCanvas.width = 1;
-                displacementCanvas.height = 1;
-                generateBtn.disabled = true;
-                downloadBtn.disabled = true;
-                fileInput.value = '';
-                dropZone.style.display = 'block';
-            });
+        blurSlider.addEventListener('input', function() {
+            blurValue.textContent = this.value;
+        });
 
-            // Адаптация размера canvas
-            function adjustCanvasSize(width, height) {
-                const maxWidth = (window.innerWidth * 0.9) / 2 - 40;
-                const maxHeight = window.innerHeight * 0.4;
-                const ratio = Math.min(maxWidth / width, maxHeight / height);
-                
-                originalCanvas.style.width = `${width * ratio}px`;
-                originalCanvas.style.height = `${height * ratio}px`;
-                displacementCanvas.style.width = `${width * ratio}px`;
-                displacementCanvas.style.height = `${height * ratio}px`;
-            }
+        // Функция для применения box blur
+        function applyBlur(imageData, radius) {
+            if (radius <= 0) return imageData;
 
-            // Обновление значения слайдера
-            strengthSlider.addEventListener('input', function() {
-                strengthValue.textContent = this.value;
-            });
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const result = new Uint8ClampedArray(data.length);
 
-            // Генерация Displacement Map
-            generateBtn.addEventListener('click', function() {
-                if (!originalImageData) {
-                    alert('Сначала загрузите изображение!');
-                    return;
-                }
+            // Применяем размытие по горизонтали
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let r = 0, g = 0, b = 0, a = 0, count = 0;
 
-                const strength = parseInt(strengthSlider.value);
-                const data = new Uint8ClampedArray(originalImageData.data);
-                let minBrightness = 255;
-                let maxBrightness = 0;
+                    for (let dx = -radius; dx <= radius; dx++) {
+                        const nx = x + dx;
 
-                // Находим мин/макс яркость
-                for (let i = 0; i < data.length; i += 4) {
-                    const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                    if (brightness < minBrightness) minBrightness = brightness;
-                    if (brightness > maxBrightness) maxBrightness = brightness;
-                }
-
-                const normalize = normalizeCheckbox.checked;
-                const range = maxBrightness - minBrightness;
-
-                for (let i = 0; i < data.length; i += 4) {
-                    let brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                    
-                    if (normalize && range > 0) {
-                        brightness = ((brightness - minBrightness) / range) * 255;
+                        if (nx >= 0 && nx < width) {
+                            const i = (y * width + nx) * 4;
+                            r += data[i];
+                            g += data[i + 1];
+                            b += data[i + 2];
+                            a += data[i + 3];
+                            count++;
+                        }
                     }
 
-                    const displacementValue = Math.floor(brightness * (strength / 10));
-                    
-                    data[i] = displacementValue;
-                    data[i + 1] = displacementValue;
-                    data[i + 2] = displacementValue;
+                    const i = (y * width + x) * 4;
+                    result[i] = r / count;
+                    result[i + 1] = g / count;
+                    result[i + 2] = b / count;
+                    result[i + 3] = a / count;
+                }
+            }
+
+            // Применяем размытие по вертикали
+            const temp = new Uint8ClampedArray(result);
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let r = 0, g = 0, b = 0, a = 0, count = 0;
+
+                    for (let dy = -radius; dy <= radius; dy++) {
+                        const ny = y + dy;
+
+                        if (ny >= 0 && ny < height) {
+                            const i = (ny * width + x) * 4;
+                            r += temp[i];
+                            g += temp[i + 1];
+                            b += temp[i + 2];
+                            a += temp[i + 3];
+                            count++;
+                        }
+                    }
+
+                    const i = (y * width + x) * 4;
+                    result[i] = r / count;
+                    result[i + 1] = g / count;
+                    result[i + 2] = b / count;
+                    result[i + 3] = a / count;
+                }
+            }
+
+            return new ImageData(result, width, height);
+        }
+
+        // Генерация Displacement Map
+        generateBtn.addEventListener('click', function() {
+            if (!originalImageData) {
+                alert('Сначала загрузите изображение!');
+                return;
+            }
+
+            const strength = parseInt(strengthSlider.value);
+            const blurRadius = parseInt(blurSlider.value);
+
+            // Применяем размытие перед обработкой
+            let processedImageData = originalImageData;
+            if (blurRadius > 0) {
+                processedImageData = applyBlur(originalImageData, blurRadius);
+            }
+
+            const data = new Uint8ClampedArray(processedImageData.data);
+            let minBrightness = 255;
+            let maxBrightness = 0;
+
+            // Находим мин/макс яркость
+            for (let i = 0; i < data.length; i += 4) {
+                const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                if (brightness < minBrightness) minBrightness = brightness;
+                if (brightness > maxBrightness) maxBrightness = brightness;
+            }
+
+            const normalize = normalizeCheckbox.checked;
+            const range = maxBrightness - minBrightness;
+
+            for (let i = 0; i < data.length; i += 4) {
+                let brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+
+                if (normalize && range > 0) {
+                    brightness = ((brightness - minBrightness) / range) * 255;
                 }
 
-                const resultImageData = new ImageData(data, originalImageData.width, originalImageData.height);
-                displacementCtx.putImageData(resultImageData, 0, 0);
-                downloadBtn.disabled = false;
-            });
+                const displacementValue = Math.floor(brightness * (strength / 10));
 
-            // Скачивание результата
-            downloadBtn.addEventListener('click', function() {
-                const link = document.createElement('a');
-                link.download = 'displacement-map-' + Date.now() + '.png';
-                link.href = displacementCanvas.toDataURL('image/png');
-                link.click();
-            });
+                data[i] = displacementValue;
+                data[i + 1] = displacementValue;
+                data[i + 2] = displacementValue;
+            }
 
-            // Ресайз окна
-            window.addEventListener('resize', function() {
-                if (originalImage) {
-                    adjustCanvasSize(originalImage.width, originalImage.height);
-                }
-            });
+            const resultImageData = new ImageData(data, processedImageData.width, processedImageData.height);
+            displacementCtx.putImageData(resultImageData, 0, 0);
+            downloadBtn.disabled = false;
         });
-    </script>
+
+        // Скачивание результата
+        downloadBtn.addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.download = 'displacement-map-' + Date.now() + '.png';
+            link.href = displacementCanvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // Ресайз окна
+        window.addEventListener('resize', function() {
+            if (originalImage) {
+                adjustCanvasSize(originalImage.width, originalImage.height);
+            }
+        });
+    });
+</script>
 </body>
 </html>
